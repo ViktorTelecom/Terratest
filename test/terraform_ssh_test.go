@@ -3,9 +3,13 @@ package test
 import (
 	"testing"
 
+	"io/ioutil"
+
 	"github.com/gruntwork-io/terratest/modules/ssh"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
+
+	"fmt"
 )
 
 func TestSHConnect(t *testing.T) {
@@ -26,6 +30,19 @@ func TestSHConnect(t *testing.T) {
 	// output := terraform.Output(t, terraformOptions, "hello_world")
 	// assert.Equal(t, "Hello, World!", output)
 
+
+	Buffer, _ := ioutil.ReadFile("/home/viktor/.ssh/id_rsa.pub")
+	MyPubKey := string(Buffer)
+	Buffer, _ = ioutil.ReadFile("/home/viktor/.ssh/id_rsa")
+	MyPrivKey := string(Buffer)
+
+	fmt.Print("---------------------------------------------------------")
+	fmt.Print(MyPubKey)
+	fmt.Print("---------------------------------------------------------")
+	fmt.Print(MyPrivKey)
+	fmt.Print("---------------------------------------------------------")
+
+	//var MyRSAKeyPair = ssh.GenerateRSAKeyPair(t, 2048)
 	var MyRSAKeyPair = ssh.GenerateRSAKeyPair(t, 2048)
 
 	var Host_1 = ssh.Host{
