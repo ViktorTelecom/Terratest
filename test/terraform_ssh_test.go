@@ -30,7 +30,6 @@ func TestSHConnect(t *testing.T) {
 	// output := terraform.Output(t, terraformOptions, "hello_world")
 	// assert.Equal(t, "Hello, World!", output)
 
-
 	Buffer, _ := ioutil.ReadFile("/home/viktor/.ssh/id_rsa.pub")
 	MyPubKey := string(Buffer)
 	Buffer, _ = ioutil.ReadFile("/home/viktor/.ssh/id_rsa")
@@ -43,7 +42,7 @@ func TestSHConnect(t *testing.T) {
 	fmt.Print("---------------------------------------------------------")
 
 	//var MyRSAKeyPair = ssh.GenerateRSAKeyPair(t, 2048)
-	var MyRSAKeyPair = ssh.GenerateRSAKeyPair(t, 2048)
+	MyRSAKeyPair := ssh.KeyPair{MyPubKey, MyPrivKey}
 
 	var Host_1 = ssh.Host{
 		Hostname:    terraform.Output(t, terraformOptions, "server_1_public_ip"),
