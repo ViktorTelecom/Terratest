@@ -1,15 +1,16 @@
 package test
 
 import (
-	"testing"
-
+	"fmt"
 	"io/ioutil"
+	"strings"
+	"testing"
+	"time"
 
+	"github.com/gruntwork-io/terratest/modules/retry"
 	"github.com/gruntwork-io/terratest/modules/ssh"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
-
-	"fmt"
 )
 
 func TestSHConnect(t *testing.T) {
@@ -35,12 +36,6 @@ func TestSHConnect(t *testing.T) {
 	Buffer, _ = ioutil.ReadFile("/home/viktor/.ssh/id_rsa")
 	MyPrivKey := string(Buffer)
 
-	fmt.Print("---------------------------------------------------------")
-	fmt.Print(MyPubKey)
-	fmt.Print("---------------------------------------------------------")
-	fmt.Print(MyPrivKey)
-	fmt.Print("---------------------------------------------------------")
-
 	//var MyRSAKeyPair = ssh.GenerateRSAKeyPair(t, 2048)
 	MyRSAKeyPair := ssh.KeyPair{MyPubKey, MyPrivKey}
 
@@ -56,6 +51,35 @@ func TestSHConnect(t *testing.T) {
 		SshKeyPair:  &MyRSAKeyPair,
 	}
 
-	assert.Equal(t, ssh.CheckSshConnectionE(t, Host_1), nil)
-	assert.Equal(t, ssh.CheckSshConnectionE(t, Host_2), nil)
+	// It can take a minute or so for the Instance to boot up, so retry a few times
+	maxRetries := 30
+	timeBetweenRetries := 5 * time.Second
+
+	hosts := []ssh.Host{Host_1, Host_2}
+
+	for _, host := range hosts {
+		description := fmt.Sprintf("SSH to public host %s", host.Hostname)
+
+		expectedText := "Hello, World"
+		command := fmt.Sprintf("echo -n '%s'", expectedText)
+
+		retry.DoWithRetry(t, description, maxRetries, timeBetweenRetries, func() (string, error) {
+			actualText, err := ssh.CheckSshCommandE(t, host, command)
+
+			if err != nil {
+				return "", err
+			}
+
+			if strings.TrimSpace(actualText) != expectedText {
+				return "", fmt.Errorf("Expected SSH command to return '%s' but got '%s'", expectedText, actualText)
+			}
+
+			assert.Equal(t, strings.TrimSpace(actualText), expectedText)
+
+			return "", nil
+		})
+	}
+
+	//assert.Equal(t, ssh.CheckSshConnectionE(t, Host_1), nil)
+	//assert.Equal(t, ssh.CheckSshConnectionE(t, Host_2), nil)
 }
